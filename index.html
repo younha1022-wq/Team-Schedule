@@ -1,0 +1,1347 @@
+<title>팀 근무표</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    --bg:#F5F6F8;
+    --surface:#FFFFFF;
+    --surface-2:#F0F2F5;
+    --ink:#1B2130;
+    --ink-soft:#4A5268;
+    --muted:#8A93A6;
+    --line:#E4E7EC;
+    --line-strong:#D2D6DE;
+    --accent:#1F7A6C;
+    --accent-ink:#0F4A40;
+    --accent-soft:#E3F3EF;
+    --danger:#D64545;
+    --shadow: 0 1px 2px rgba(20,24,34,.04), 0 8px 24px rgba(20,24,34,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151C;
+      --surface:#1A1F29;
+      --surface-2:#20263280;
+      --ink:#EDEFF3;
+      --ink-soft:#C3C9D6;
+      --muted:#8892A4;
+      --line:#2B3140;
+      --line-strong:#3A4152;
+      --accent:#4FD1B5;
+      --accent-ink:#BFF3E6;
+      --accent-soft:#173630;
+      --danger:#FF6B6B;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151C;
+    --surface:#1A1F29;
+    --surface-2:#20263280;
+    --ink:#EDEFF3;
+    --ink-soft:#C3C9D6;
+    --muted:#8892A4;
+    --line:#2B3140;
+    --line-strong:#3A4152;
+    --accent:#4FD1B5;
+    --accent-ink:#BFF3E6;
+    --accent-soft:#173630;
+    --danger:#FF6B6B;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:"Noto Sans KR", -apple-system, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .page{
+    max-width:1020px;
+    margin:0 auto;
+    padding:36px 20px 80px;
+    display:flex;
+    flex-direction:column;
+    gap:20px;
+  }
+
+  .status-banner{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+    background:var(--accent-soft);
+    border:1px solid var(--accent);
+    border-radius:14px;
+    padding:14px 18px;
+  }
+  .status-item{
+    flex:1 1 200px;
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .status-label{
+    font-family:"IBM Plex Mono", monospace;
+    font-size:10.5px;
+    font-weight:600;
+    letter-spacing:.06em;
+    color:var(--accent-ink);
+    opacity:.8;
+  }
+  .status-value{
+    font-size:16px;
+    font-weight:800;
+    color:var(--accent-ink);
+  }
+
+  .hero{ padding:4px 4px 8px; }
+  .eyebrow{
+    margin:0 0 8px;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11px;
+    font-weight:600;
+    letter-spacing:.12em;
+    color:var(--accent);
+  }
+  h1{
+    margin:0 0 8px;
+    font-size:clamp(24px,4vw,32px);
+    font-weight:900;
+    letter-spacing:-.01em;
+    text-wrap:balance;
+  }
+  .sub{
+    margin:0;
+    max-width:64ch;
+    color:var(--ink-soft);
+    font-size:14.5px;
+    line-height:1.6;
+  }
+
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:var(--shadow);
+    padding:20px 20px 22px;
+  }
+  .card-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    flex-wrap:wrap;
+    margin-bottom:14px;
+  }
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:700;
+  }
+
+  .btn{
+    appearance:none;
+    border:1px solid var(--line-strong);
+    background:var(--surface);
+    color:var(--ink);
+    font:inherit;
+    font-weight:600;
+    font-size:13px;
+    padding:8px 14px;
+    border-radius:9px;
+    cursor:pointer;
+    transition:filter .12s ease, transform .05s ease;
+  }
+  .btn:hover{ filter:brightness(0.97); }
+  :root[data-theme="dark"] .btn:hover{ filter:brightness(1.15); }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]) .btn:hover{ filter:brightness(1.15); }
+    :root:not([data-theme="light"]) .day-cell-btn:hover{ filter:brightness(1.2); }
+  }
+  .btn:active{ transform:translateY(1px); }
+  .btn:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  .btn-accent{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#06231D;
+  }
+  .btn-ghost{
+    background:transparent;
+    border-color:transparent;
+    color:var(--ink-soft);
+  }
+  .btn-danger{ color:var(--danger); }
+  .btn-sm{ padding:5px 10px; font-size:12px; border-radius:7px; }
+
+  /* roster table */
+  .table-scroll{ overflow-x:auto; }
+  table{ border-collapse:collapse; width:100%; min-width:760px; }
+  thead th{
+    text-align:center;
+    font-size:12px;
+    font-weight:600;
+    color:var(--muted);
+    padding:0 6px 8px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  thead th.col-name{ text-align:left; padding-left:2px; }
+  thead th.col-cat{ text-align:left; width:118px; }
+  thead th.col-del{ width:32px; }
+  tbody td{
+    padding:6px 6px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  tbody tr:last-child td{ border-bottom:none; }
+
+  .category-panel-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+    margin-bottom:12px;
+    padding-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .category-name-input{
+    font:inherit;
+    font-weight:800;
+    font-size:14.5px;
+    color:var(--accent);
+    background:transparent;
+    border:1px solid transparent;
+    border-radius:6px;
+    padding:5px 7px;
+    min-width:120px;
+    max-width:320px;
+    flex:1;
+  }
+  .category-name-input:hover{ border-color:var(--line-strong); }
+  .category-name-input:focus{ border-color:var(--accent); outline:none; background:var(--surface-2); }
+  .category-panel-head-actions{ display:flex; align-items:center; gap:6px; flex:none; }
+  .category-panel-label{
+    font-weight:800;
+    font-size:14.5px;
+    color:var(--ink-soft);
+    padding:5px 7px;
+  }
+
+  .cat-empty-row td{
+    padding:6px 6px 4px;
+    color:var(--muted);
+    font-size:12.5px;
+  }
+
+  .name-cell{ display:flex; align-items:center; gap:8px; min-width:120px; }
+  .dot{
+    width:10px; height:10px; border-radius:50%; flex:none;
+  }
+  .name-input{
+    border:1px solid transparent;
+    background:transparent;
+    font:inherit;
+    font-weight:700;
+    font-size:14px;
+    color:var(--ink);
+    padding:5px 6px;
+    border-radius:6px;
+    width:100%;
+    min-width:80px;
+  }
+  .name-input:hover{ border-color:var(--line-strong); }
+  .name-input:focus{ border-color:var(--accent); outline:none; background:var(--surface-2); }
+
+  .cat-select{
+    font:inherit;
+    font-size:11.5px;
+    color:var(--ink-soft);
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:7px;
+    padding:6px 6px;
+    max-width:120px;
+    width:100%;
+  }
+  .cat-select:focus{ outline:2px solid var(--accent); outline-offset:1px; }
+
+  .del-btn{
+    background:none; border:none; cursor:pointer;
+    color:var(--muted); font-size:16px; line-height:1;
+    padding:4px; border-radius:6px;
+  }
+  .del-btn:hover{ color:var(--danger); background:var(--surface-2); }
+
+  .day-cell-btn{
+    width:100%;
+    appearance:none;
+    border:1px solid var(--line);
+    background:var(--surface-2);
+    color:var(--muted);
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11.5px;
+    font-weight:500;
+    padding:7px 4px;
+    border-radius:8px;
+    cursor:pointer;
+    text-align:center;
+    line-height:1.35;
+    min-width:74px;
+    transition:filter .1s ease;
+  }
+  .day-cell-btn:hover{ filter:brightness(0.96); }
+  :root[data-theme="dark"] .day-cell-btn:hover{ filter:brightness(1.2); }
+  .day-cell-btn.filled{
+    color:var(--cell-color, var(--accent-ink));
+    background:var(--cell-bg, var(--accent-soft));
+    border-color:var(--cell-color, var(--accent));
+    font-weight:600;
+  }
+  .day-cell-btn.empty{
+    color:var(--muted);
+    border-style:dashed;
+  }
+  .day-cell-btn.off{
+    font-style:italic;
+    border-style:dashed;
+  }
+  .day-cell-note{
+    display:block;
+    font-family:"Noto Sans KR", sans-serif;
+    font-size:10.5px;
+    font-weight:500;
+    opacity:.85;
+  }
+
+  .empty-hint{
+    margin:14px 2px 2px;
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  /* modal */
+  .modal-backdrop{
+    position:fixed; inset:0;
+    background:rgba(10,12,16,.42);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    z-index:50;
+  }
+  .modal{
+    width:100%; max-width:360px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:14px;
+    box-shadow:var(--shadow);
+    padding:20px;
+  }
+  .modal h3{
+    margin:0 0 14px;
+    font-size:15px;
+    font-weight:700;
+  }
+  .modal-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:12px;
+  }
+  .field{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    gap:5px;
+  }
+  .field label{
+    font-size:11px;
+    font-weight:600;
+    color:var(--muted);
+  }
+  .field input[type="time"], .field input[type="text"]{
+    font:inherit;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:13px;
+    border:1px solid var(--line-strong);
+    background:var(--bg);
+    color:var(--ink);
+    border-radius:8px;
+    padding:8px 9px;
+    width:100%;
+  }
+  .field.note input[type="text"]{ font-family:"Noto Sans KR", sans-serif; }
+  .field input:focus{ outline:2px solid var(--accent); outline-offset:1px; border-color:var(--accent); }
+  .modal-shift-options{
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+    margin-bottom:12px;
+    padding:10px 11px;
+    background:var(--surface-2);
+    border-radius:8px;
+  }
+  .check-row{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-size:12.5px;
+    color:var(--ink-soft);
+    cursor:pointer;
+  }
+  .check-row input{ flex:none; }
+  .modal-note{ margin-bottom:16px; }
+  .modal-actions{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .modal-actions-left{ display:flex; gap:4px; }
+  .modal-actions-right{ display:flex; gap:8px; }
+  .modal-hint{
+    margin:0 0 14px;
+    font-size:11.5px;
+    color:var(--muted);
+    line-height:1.5;
+  }
+
+  /* timeline */
+  .cat-tabs{ display:flex; gap:6px; flex-wrap:wrap; margin-bottom:10px; }
+  .cat-tab{
+    appearance:none;
+    border:1px solid var(--line-strong);
+    background:var(--surface);
+    color:var(--ink-soft);
+    font:inherit;
+    font-weight:700;
+    font-size:13px;
+    padding:7px 13px;
+    border-radius:9px;
+    cursor:pointer;
+  }
+  .cat-tab.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#06231D;
+  }
+
+  .day-tabs{ display:flex; gap:4px; flex-wrap:wrap; }
+  .day-tab{
+    appearance:none;
+    border:1px solid var(--line);
+    background:var(--surface-2);
+    color:var(--ink-soft);
+    font:inherit;
+    font-weight:600;
+    font-size:12.5px;
+    padding:6px 11px;
+    border-radius:8px;
+    cursor:pointer;
+  }
+  .day-tab.active{
+    background:var(--accent);
+    border-color:var(--accent);
+    color:#06231D;
+  }
+  .day-tab.is-today::after{
+    content:"";
+    display:inline-block;
+    width:4px; height:4px; border-radius:50%;
+    background:currentColor;
+    margin-left:5px;
+    vertical-align:middle;
+    opacity:.7;
+  }
+  .range-note{
+    margin:0 0 14px;
+    font-size:12px;
+    color:var(--muted);
+  }
+
+  .timeline-scroll{ overflow-x:auto; }
+  .timeline{
+    display:flex;
+    min-width:100%;
+    width:max-content;
+  }
+  .hour-ruler{
+    flex:none;
+    width:34px;
+    position:relative;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11px;
+    color:var(--muted);
+  }
+  .hour-tick{
+    position:absolute;
+    left:0; right:0;
+    transform:translateY(-50%);
+    text-align:right;
+    padding-right:8px;
+  }
+  .lanes{
+    flex:1;
+    display:flex;
+    gap:18px;
+    padding-top:26px;
+    position:relative;
+    min-width:0;
+  }
+  .gridlines{
+    position:absolute;
+    left:0; right:0; top:26px;
+    pointer-events:none;
+  }
+  .gridline{
+    position:absolute;
+    left:0; right:0;
+    border-top:1px dashed var(--line);
+  }
+  .lane{
+    flex:1 0 92px;
+    max-width:120px;
+    position:relative;
+  }
+  .lane-name{
+    position:absolute;
+    top:-26px; left:0; right:0;
+    text-align:center;
+    font-size:12.5px;
+    font-weight:700;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .lane-track{
+    position:relative;
+    height:var(--track-h, 400px);
+    background:var(--surface-2);
+    border:1px solid var(--line);
+    border-radius:8px;
+  }
+  .lane-off{
+    position:absolute; inset:0;
+    display:flex; align-items:center; justify-content:center;
+    color:var(--muted);
+    font-size:11.5px;
+    font-weight:500;
+    text-align:center;
+    padding:6px;
+  }
+  .lane-bar{
+    position:absolute;
+    left:3px; right:3px;
+    border-radius:7px;
+    border:1px solid var(--bar-color);
+    background:var(--bar-bg);
+    color:var(--bar-color);
+    padding:6px 6px;
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+  }
+  .lane-bar .time{
+    display:block;
+    font-family:"IBM Plex Mono", monospace;
+    font-size:11px;
+    font-weight:600;
+    line-height:1.3;
+  }
+  .lane-bar .note{
+    display:block;
+    font-size:10.5px;
+    font-weight:600;
+    margin-top:2px;
+    opacity:.9;
+  }
+  .lane-bar.is-default{
+    border-style:dashed;
+    opacity:.7;
+  }
+
+  .timeline-empty{
+    color:var(--muted);
+    font-size:13px;
+    padding:30px 4px;
+    text-align:center;
+  }
+
+  .footnote{
+    text-align:center;
+    color:var(--muted);
+    font-size:11.5px;
+    margin-top:4px;
+  }
+
+  [hidden]{ display:none !important; }
+</style>
+
+<div class="page">
+  <div class="status-banner" id="statusBanner">
+    <div class="status-item">
+      <span class="status-label">오늘의 야간근무자</span>
+      <span class="status-value" id="nightWorkerText">-</span>
+    </div>
+    <div class="status-item">
+      <span class="status-label">이번주 토요근무자</span>
+      <span class="status-value" id="satWorkerText">-</span>
+    </div>
+  </div>
+
+  <header class="hero">
+    <p class="eyebrow">TEAM SCHEDULE BOARD</p>
+    <h1>팀 근무표</h1>
+    <p class="sub">실·분류별로 팀원을 묶어 요일별 근무 시간을 입력하면, 아래 타임라인에서 9시~22시 사이 누가 언제 근무하는지 한눈에 볼 수 있어요.</p>
+  </header>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>주간 근무 입력</h2>
+      <button class="btn btn-accent" id="addCategoryBtn">+ 분류 추가</button>
+    </div>
+    <div class="cat-tabs" id="rosterCatTabs"></div>
+    <div class="category-panel-head" id="categoryPanelHead"></div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-name">이름</th>
+            <th class="col-cat">분류</th>
+            <th>월</th><th>화</th><th>수</th><th>목</th><th>금</th><th>토</th>
+            <th class="col-del"></th>
+          </tr>
+        </thead>
+        <tbody id="rosterBody"></tbody>
+      </table>
+    </div>
+    <p class="empty-hint" id="emptyHint" hidden>아직 분류가 없어요. 위의 “+ 분류 추가” 버튼으로 시작해보세요.</p>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>일별 보기</h2>
+    </div>
+    <div class="cat-tabs" id="catTabs"></div>
+    <div class="day-tabs" id="dayTabs"></div>
+    <p class="range-note">09:00 ~ 22:00 범위로 표시돼요. 시간을 입력하지 않은 날은 기본값(09:00~18:00, 점선 표시)으로 보여요.</p>
+    <div class="timeline-scroll">
+      <div class="timeline" id="timelineWrap">
+        <div class="hour-ruler" id="hourRuler"></div>
+        <div class="lanes" id="lanes">
+          <div class="gridlines" id="gridlines"></div>
+        </div>
+      </div>
+    </div>
+    <p class="timeline-empty" id="timelineEmpty" hidden>표시할 팀원이 없어요.</p>
+  </section>
+
+  <p class="footnote" id="storeNote"></p>
+</div>
+
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal">
+    <h3 id="modalTitle">이름 · 요일</h3>
+    <div class="modal-row">
+      <div class="field">
+        <label for="modalStart">시작</label>
+        <input type="time" id="modalStart">
+      </div>
+      <div class="field">
+        <label for="modalEnd">종료</label>
+        <input type="time" id="modalEnd">
+      </div>
+    </div>
+    <div class="modal-shift-options" id="modalShiftOptions">
+      <label class="check-row"><input type="checkbox" id="modalNight"> 🌙 야간근무 (12:00~21:00)</label>
+      <label class="check-row" id="modalSatRow" hidden><input type="checkbox" id="modalSatDuty"> 🗓 토요근무 (09:00~17:00, 이번 주 담당)</label>
+    </div>
+    <div class="field note modal-note">
+      <label for="modalNote">메모 (선택)</label>
+      <input type="text" id="modalNote" placeholder="예: 반차, 재택근무">
+    </div>
+    <p class="modal-hint" id="modalHint"></p>
+    <div class="modal-actions">
+      <div class="modal-actions-left">
+        <button class="btn btn-ghost btn-sm" id="modalReset">기본값으로</button>
+        <button class="btn btn-ghost btn-sm btn-danger" id="modalOff">휴무로 설정</button>
+      </div>
+      <div class="modal-actions-right">
+        <button class="btn btn-ghost" id="modalCancel">취소</button>
+        <button class="btn btn-accent" id="modalSave">저장</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  var DAYS = [
+    {key:"mon", label:"월"},
+    {key:"tue", label:"화"},
+    {key:"wed", label:"수"},
+    {key:"thu", label:"목"},
+    {key:"fri", label:"금"},
+    {key:"sat", label:"토"}
+  ];
+  var PALETTE = ["#3B82F6","#F59E0B","#10B981","#EF4444","#8B5CF6","#EC4899","#14B8A6","#F97316"];
+  var HOUR_H = 28;
+  var DAY_MIN = 9;
+  var DAY_MAX = 22;
+  var NO_CATEGORY = "__none__";
+
+  var rosterBody = document.getElementById("rosterBody");
+  var emptyHint = document.getElementById("emptyHint");
+  var addCategoryBtn = document.getElementById("addCategoryBtn");
+  var rosterCatTabsEl = document.getElementById("rosterCatTabs");
+  var categoryPanelHeadEl = document.getElementById("categoryPanelHead");
+  var catTabsEl = document.getElementById("catTabs");
+  var dayTabsEl = document.getElementById("dayTabs");
+  var hourRulerEl = document.getElementById("hourRuler");
+  var gridlinesEl = document.getElementById("gridlines");
+  var lanesEl = document.getElementById("lanes");
+  var timelineEmptyEl = document.getElementById("timelineEmpty");
+  var storeNoteEl = document.getElementById("storeNote");
+  var nightWorkerTextEl = document.getElementById("nightWorkerText");
+  var satWorkerTextEl = document.getElementById("satWorkerText");
+
+  var modalBackdrop = document.getElementById("modalBackdrop");
+  var modalTitle = document.getElementById("modalTitle");
+  var modalStart = document.getElementById("modalStart");
+  var modalEnd = document.getElementById("modalEnd");
+  var modalNote = document.getElementById("modalNote");
+  var modalHint = document.getElementById("modalHint");
+  var modalNightEl = document.getElementById("modalNight");
+  var modalSatRowEl = document.getElementById("modalSatRow");
+  var modalSatDutyEl = document.getElementById("modalSatDuty");
+
+  var categories = [];
+  var people = [];
+  var editing = null; // {id, day}
+  var jsDow = new Date().getDay(); // 0 sun .. 6 sat
+  var todayKey = jsDow === 0 ? null : DAYS[jsDow - 1].key; // no Sunday entry; Sunday itself has no "today" tab
+  var selectedDay = todayKey || "mon";
+  var selectedCategoryId = null;
+  var selectedRosterCatId = null;
+  var DEFAULT_START = "09:00";
+  var DEFAULT_END = "18:00";
+  var NIGHT_START = "12:00";
+  var NIGHT_END = "21:00";
+  var SAT_START = "09:00";
+  var SAT_END = "17:00";
+
+  function toDec(hhmm){
+    var parts = hhmm.split(":");
+    return parseInt(parts[0],10) + (parseInt(parts[1],10) || 0) / 60;
+  }
+  function fmt(hhmm){ return hhmm; }
+  function colorFor(idx){ return PALETTE[idx % PALETTE.length]; }
+
+  // A day with no entry defaults to a 09:00-18:00 workday; an explicit
+  // "휴무" mark is stored as {off:true} so it stays distinguishable from "not entered yet".
+  function getDaySchedule(p, day){
+    var raw = (p.schedule || {})[day];
+    if(raw === undefined || raw === null){
+      return {type:"default", start: DEFAULT_START, end: DEFAULT_END, note:""};
+    }
+    if(raw.off){
+      return {type:"off"};
+    }
+    return {type:"custom", start: raw.start, end: raw.end, note: raw.note || ""};
+  }
+  function escapeHtml(s){
+    var div = document.createElement("div");
+    div.textContent = s;
+    return div.innerHTML;
+  }
+  function nextOrder(list){
+    if(!list.length) return 0;
+    return Math.max.apply(null, list.map(function(x){ return x.order || 0; })) + 1;
+  }
+
+  function render(){
+    renderStatusBanner();
+    renderRoster();
+    renderDayTabs();
+    renderTimeline();
+  }
+
+  function renderStatusBanner(){
+    if(todayKey === null){
+      nightWorkerTextEl.textContent = "오늘은 일요일이라 근무 일정이 없어요";
+    } else {
+      var nightWorkers = people.filter(function(p){
+        var raw = (p.schedule || {})[todayKey];
+        return raw && !raw.off && raw.night;
+      }).map(function(p){ return p.name; });
+      nightWorkerTextEl.textContent = nightWorkers.length ? nightWorkers.join(", ") + "입니다" : "아직 지정된 사람이 없어요";
+    }
+
+    var satWorkers = people.filter(function(p){
+      var raw = (p.schedule || {}).sat;
+      return raw && !raw.off && raw.start && raw.end;
+    }).map(function(p){ return p.name; });
+    satWorkerTextEl.textContent = satWorkers.length ? satWorkers.join(", ") + "입니다" : "아직 지정된 사람이 없어요";
+  }
+
+  function renderRoster(){
+    var tabsList = categories.slice();
+    var hasUncategorized = people.some(function(p){
+      return !categories.some(function(c){ return c.id === p.categoryId; });
+    });
+    if(hasUncategorized){
+      tabsList.push({id: NO_CATEGORY, name: "미분류"});
+    }
+    emptyHint.hidden = tabsList.length > 0;
+    if(!selectedRosterCatId || !tabsList.some(function(t){ return t.id === selectedRosterCatId; })){
+      selectedRosterCatId = tabsList.length ? tabsList[0].id : null;
+    }
+
+    rosterCatTabsEl.innerHTML = "";
+    tabsList.forEach(function(t){
+      var b = document.createElement("button");
+      b.className = "cat-tab" + (t.id === selectedRosterCatId ? " active" : "");
+      b.textContent = t.name;
+      b.addEventListener("click", function(){ selectedRosterCatId = t.id; render(); });
+      rosterCatTabsEl.appendChild(b);
+    });
+
+    categoryPanelHeadEl.innerHTML = "";
+    rosterBody.innerHTML = "";
+    if(!selectedRosterCatId) return;
+
+    var isRealCategory = selectedRosterCatId !== NO_CATEGORY;
+    var currentCat = categories.find(function(c){ return c.id === selectedRosterCatId; });
+
+    if(isRealCategory && currentCat){
+      var nameInput = document.createElement("input");
+      nameInput.className = "category-name-input";
+      nameInput.value = currentCat.name;
+      nameInput.setAttribute("aria-label", "분류 이름");
+      nameInput.addEventListener("change", function(){
+        var v = nameInput.value.trim() || "분류";
+        store.updateCategory(currentCat.id, {name: v});
+      });
+      categoryPanelHeadEl.appendChild(nameInput);
+
+      var actions = document.createElement("div");
+      actions.className = "category-panel-head-actions";
+      var addBtn = document.createElement("button");
+      addBtn.className = "btn btn-ghost btn-sm";
+      addBtn.textContent = "+ 팀원";
+      addBtn.addEventListener("click", function(){
+        store.addPerson({
+          name: "새 팀원",
+          order: nextOrder(people),
+          colorIndex: people.length,
+          categoryId: currentCat.id,
+          schedule: {}
+        });
+      });
+      var delCatBtn = document.createElement("button");
+      delCatBtn.className = "del-btn";
+      delCatBtn.title = "분류 삭제";
+      delCatBtn.textContent = "×";
+      delCatBtn.addEventListener("click", function(){
+        var members = people.filter(function(p){ return p.categoryId === currentCat.id; });
+        if(members.length){
+          alert("이 분류에 속한 팀원이 있어요. 먼저 팀원을 다른 분류로 옮기거나 삭제해주세요.");
+          return;
+        }
+        if(confirm('"' + currentCat.name + '" 분류를 삭제할까요?')){
+          store.deleteCategory(currentCat.id);
+        }
+      });
+      actions.appendChild(addBtn);
+      actions.appendChild(delCatBtn);
+      categoryPanelHeadEl.appendChild(actions);
+    } else {
+      var label = document.createElement("span");
+      label.className = "category-panel-label";
+      label.textContent = "미분류";
+      categoryPanelHeadEl.appendChild(label);
+    }
+
+    var members = isRealCategory
+      ? people.filter(function(p){ return p.categoryId === selectedRosterCatId; })
+      : people.filter(function(p){ return !categories.some(function(c){ return c.id === p.categoryId; }); });
+
+    if(!members.length){
+      var emptyRow = document.createElement("tr");
+      emptyRow.className = "cat-empty-row";
+      var emptyTd = document.createElement("td");
+      emptyTd.colSpan = 9;
+      emptyTd.textContent = "이 분류에는 아직 팀원이 없어요.";
+      emptyRow.appendChild(emptyTd);
+      rosterBody.appendChild(emptyRow);
+      return;
+    }
+
+    members.forEach(function(p){
+      rosterBody.appendChild(buildPersonRow(p));
+    });
+  }
+
+  function buildPersonRow(p){
+    var tr = document.createElement("tr");
+
+    var nameTd = document.createElement("td");
+    var wrap = document.createElement("div");
+    wrap.className = "name-cell";
+    var dot = document.createElement("span");
+    dot.className = "dot";
+    dot.style.background = colorFor(p.colorIndex);
+    var nameInput = document.createElement("input");
+    nameInput.className = "name-input";
+    nameInput.value = p.name;
+    nameInput.setAttribute("aria-label", "이름");
+    nameInput.addEventListener("change", function(){
+      var v = nameInput.value.trim() || "이름 없음";
+      store.updatePerson(p.id, {name: v});
+    });
+    wrap.appendChild(dot);
+    wrap.appendChild(nameInput);
+    nameTd.appendChild(wrap);
+    tr.appendChild(nameTd);
+
+    var catTd = document.createElement("td");
+    var select = document.createElement("select");
+    select.className = "cat-select";
+    select.setAttribute("aria-label", "분류 이동");
+    categories.forEach(function(c){
+      var opt = document.createElement("option");
+      opt.value = c.id;
+      opt.textContent = c.name;
+      if(c.id === p.categoryId) opt.selected = true;
+      select.appendChild(opt);
+    });
+    select.addEventListener("change", function(){
+      store.updatePerson(p.id, {categoryId: select.value});
+    });
+    catTd.appendChild(select);
+    tr.appendChild(catTd);
+
+    DAYS.forEach(function(d){
+      var td = document.createElement("td");
+      var raw = (p.schedule || {})[d.key];
+      var btn = document.createElement("button");
+      if(raw === undefined || raw === null){
+        btn.className = "day-cell-btn empty";
+        btn.textContent = "입력";
+      } else if(raw.off){
+        btn.className = "day-cell-btn off";
+        btn.textContent = "휴무";
+      } else {
+        btn.className = "day-cell-btn filled";
+        btn.style.setProperty("--cell-color", colorFor(p.colorIndex));
+        btn.style.setProperty("--cell-bg", colorFor(p.colorIndex) + "1c");
+        var badge = raw.night ? "🌙 " : (raw.satDuty ? "🗓 " : "");
+        btn.innerHTML = badge + fmt(raw.start) + "&ndash;" + fmt(raw.end) +
+          (raw.note ? '<span class="day-cell-note">' + escapeHtml(raw.note) + "</span>" : "");
+      }
+      btn.addEventListener("click", function(){ openModal(p.id, d.key); });
+      td.appendChild(btn);
+      tr.appendChild(td);
+    });
+
+    var delTd = document.createElement("td");
+    var delBtn = document.createElement("button");
+    delBtn.className = "del-btn";
+    delBtn.title = "팀원 삭제";
+    delBtn.textContent = "×";
+    delBtn.addEventListener("click", function(){
+      if(confirm(p.name + "님을 명단에서 삭제할까요?")){
+        store.deletePerson(p.id);
+      }
+    });
+    delTd.appendChild(delBtn);
+    tr.appendChild(delTd);
+
+    return tr;
+  }
+
+  function renderDayTabs(){
+    dayTabsEl.innerHTML = "";
+    DAYS.forEach(function(d){
+      var b = document.createElement("button");
+      b.className = "day-tab" + (d.key === selectedDay ? " active" : "") + (d.key === todayKey ? " is-today" : "");
+      b.textContent = d.label;
+      b.addEventListener("click", function(){ selectedDay = d.key; render(); });
+      dayTabsEl.appendChild(b);
+    });
+  }
+
+  function renderTimeline(){
+    // build the category tab list (defined categories, plus a virtual
+    // "미분류" tab only if some person's categoryId matches none of them)
+    var tabsList = categories.slice();
+    var hasUncategorized = people.some(function(p){
+      return !categories.some(function(c){ return c.id === p.categoryId; });
+    });
+    if(hasUncategorized){
+      tabsList.push({id: NO_CATEGORY, name: "미분류"});
+    }
+    if(!selectedCategoryId || !tabsList.some(function(t){ return t.id === selectedCategoryId; })){
+      selectedCategoryId = tabsList.length ? tabsList[0].id : null;
+    }
+
+    catTabsEl.innerHTML = "";
+    tabsList.forEach(function(t){
+      var b = document.createElement("button");
+      b.className = "cat-tab" + (t.id === selectedCategoryId ? " active" : "");
+      b.textContent = t.name;
+      b.addEventListener("click", function(){ selectedCategoryId = t.id; render(); });
+      catTabsEl.appendChild(b);
+    });
+
+    var range = {min: DAY_MIN, max: DAY_MAX};
+    var span = range.max - range.min;
+    var trackH = span * HOUR_H;
+
+    hourRulerEl.innerHTML = "";
+    gridlinesEl.innerHTML = "";
+    gridlinesEl.style.height = trackH + "px";
+    for(var h = range.min; h <= range.max; h++){
+      var top = (h - range.min) * HOUR_H;
+      var tick = document.createElement("div");
+      tick.className = "hour-tick";
+      tick.style.top = (top + 26) + "px";
+      tick.textContent = String(h);
+      hourRulerEl.appendChild(tick);
+
+      if(h !== range.min && h !== range.max){
+        var gl = document.createElement("div");
+        gl.className = "gridline";
+        gl.style.top = top + "px";
+        gridlinesEl.appendChild(gl);
+      }
+    }
+
+    var laneNodes = lanesEl.querySelectorAll(".lane");
+    laneNodes.forEach(function(n){ n.remove(); });
+
+    var members = selectedCategoryId === NO_CATEGORY
+      ? people.filter(function(p){ return !categories.some(function(c){ return c.id === p.categoryId; }); })
+      : people.filter(function(p){ return p.categoryId === selectedCategoryId; });
+
+    timelineEmptyEl.hidden = members.length > 0;
+
+    members.forEach(function(p){
+      var lane = document.createElement("div");
+      lane.className = "lane";
+
+      var nameEl = document.createElement("div");
+      nameEl.className = "lane-name";
+      nameEl.textContent = p.name;
+      nameEl.style.color = colorFor(p.colorIndex);
+      lane.appendChild(nameEl);
+
+      var track = document.createElement("div");
+      track.className = "lane-track";
+      track.style.setProperty("--track-h", trackH + "px");
+
+      var info = getDaySchedule(p, selectedDay);
+      if(info.type === "off"){
+        var off = document.createElement("div");
+        off.className = "lane-off";
+        off.textContent = "휴무";
+        track.appendChild(off);
+      } else {
+        var st = toDec(info.start), en = toDec(info.end);
+        var clampedSt = Math.max(range.min, st);
+        var clampedEn = Math.min(range.max, en);
+        if(clampedEn > clampedSt){
+          var top = (clampedSt - range.min) * HOUR_H;
+          var height = Math.max(20, (clampedEn - clampedSt) * HOUR_H);
+          var bar = document.createElement("div");
+          bar.className = "lane-bar" + (info.type === "default" ? " is-default" : "");
+          bar.style.top = top + "px";
+          bar.style.height = height + "px";
+          bar.style.setProperty("--bar-color", colorFor(p.colorIndex));
+          bar.style.setProperty("--bar-bg", colorFor(p.colorIndex) + "22");
+          bar.innerHTML = '<span class="time">' + fmt(info.start) + "&ndash;" + fmt(info.end) + "</span>" +
+            (info.note ? '<span class="note">' + escapeHtml(info.note) + "</span>" : "");
+          track.appendChild(bar);
+        } else {
+          var outside = document.createElement("div");
+          outside.className = "lane-off";
+          outside.textContent = "9~22시 밖";
+          track.appendChild(outside);
+        }
+      }
+
+      lane.appendChild(track);
+      lanesEl.appendChild(lane);
+    });
+  }
+
+  function openModal(personId, day){
+    var p = people.find(function(x){ return x.id === personId; });
+    if(!p) return;
+    editing = {id: personId, day: day};
+    var raw = (p.schedule || {})[day];
+    var dayLabel = DAYS.find(function(d){ return d.key === day; }).label;
+    modalTitle.textContent = p.name + " · " + dayLabel + "요일";
+
+    if(raw === undefined || raw === null){
+      modalStart.value = DEFAULT_START;
+      modalEnd.value = DEFAULT_END;
+      modalNote.value = "";
+      modalNightEl.checked = false;
+      modalHint.textContent = "아직 입력하지 않았어요.";
+    } else if(raw.off){
+      modalStart.value = DEFAULT_START;
+      modalEnd.value = DEFAULT_END;
+      modalNote.value = "";
+      modalNightEl.checked = false;
+      modalHint.textContent = "현재 휴무로 표시되어 있어요.";
+    } else {
+      modalStart.value = raw.start || DEFAULT_START;
+      modalEnd.value = raw.end || DEFAULT_END;
+      modalNote.value = raw.note || "";
+      modalNightEl.checked = !!raw.night;
+      modalHint.textContent = "";
+    }
+
+    if(day === "sat"){
+      modalSatRowEl.hidden = false;
+      modalSatDutyEl.checked = !!(raw && raw.satDuty);
+    } else {
+      modalSatRowEl.hidden = true;
+      modalSatDutyEl.checked = false;
+    }
+
+    modalBackdrop.hidden = false;
+    modalStart.focus();
+  }
+
+  modalNightEl.addEventListener("change", function(){
+    if(modalNightEl.checked){
+      modalStart.value = NIGHT_START;
+      modalEnd.value = NIGHT_END;
+      modalSatDutyEl.checked = false;
+    }
+  });
+  modalSatDutyEl.addEventListener("change", function(){
+    if(modalSatDutyEl.checked){
+      modalStart.value = SAT_START;
+      modalEnd.value = SAT_END;
+      modalNightEl.checked = false;
+    }
+  });
+  function closeModal(){
+    modalBackdrop.hidden = true;
+    editing = null;
+  }
+
+  document.getElementById("modalCancel").addEventListener("click", closeModal);
+  modalBackdrop.addEventListener("click", function(e){
+    if(e.target === modalBackdrop) closeModal();
+  });
+  document.getElementById("modalSave").addEventListener("click", function(){
+    if(!editing) return;
+    if(modalStart.value && modalEnd.value && modalEnd.value <= modalStart.value){
+      alert("종료 시간은 시작 시간보다 늦어야 해요.");
+      return;
+    }
+    // db update() merges nested objects recursively rather than replacing
+    // them, so a leftover off:true from a previous edit must be cleared
+    // explicitly here or it would keep winning in getDaySchedule().
+    var patch = {};
+    patch[editing.day] = {
+      start: modalStart.value || DEFAULT_START,
+      end: modalEnd.value || DEFAULT_END,
+      note: modalNote.value.trim(),
+      off: null,
+      night: modalNightEl.checked,
+      satDuty: editing.day === "sat" ? modalSatDutyEl.checked : false
+    };
+    store.updatePerson(editing.id, {schedule: patch});
+    closeModal();
+  });
+  document.getElementById("modalOff").addEventListener("click", function(){
+    if(!editing) return;
+    var patch = {};
+    patch[editing.day] = {off: true, start: null, end: null, note: null, night: null, satDuty: null};
+    store.updatePerson(editing.id, {schedule: patch});
+    closeModal();
+  });
+  document.getElementById("modalReset").addEventListener("click", function(){
+    if(!editing) return;
+    var patch = {};
+    patch[editing.day] = null;
+    store.updatePerson(editing.id, {schedule: patch});
+    closeModal();
+  });
+
+  addCategoryBtn.addEventListener("click", function(){
+    store.addCategory({ name: "새 분류", order: nextOrder(categories) });
+  });
+
+  // ---- storage layer: db capability when available, else localStorage ----
+  var store = {
+    addCategory: function(){},
+    updateCategory: function(){},
+    deleteCategory: function(){},
+    addPerson: function(){},
+    updatePerson: function(){},
+    deletePerson: function(){}
+  };
+
+  function seedData(){
+    var cats = [
+      {id:"c1", name:"정리실", order:0},
+      {id:"c2", name:"2층 연속간행물실", order:1},
+      {id:"c3", name:"3/4층 자료실", order:2},
+      {id:"c4", name:"3층 사무실", order:3},
+      {id:"c5", name:"그레이트북스센터", order:4}
+    ];
+    var ppl = [
+      {id:"p1", name:"이나영", order:0, colorIndex:0, categoryId:"c1", schedule:{}},
+      {id:"p2", name:"김아람", order:1, colorIndex:1, categoryId:"c1", schedule:{}},
+      {id:"p3", name:"한혜빈", order:2, colorIndex:2, categoryId:"c1", schedule:{}},
+      {id:"p4", name:"장희경", order:3, colorIndex:3, categoryId:"c2", schedule:{}},
+      {id:"p5", name:"조윤주", order:4, colorIndex:4, categoryId:"c2", schedule:{}},
+      {id:"p6", name:"허지현", order:5, colorIndex:5, categoryId:"c2", schedule:{}},
+      {id:"p7", name:"이종혁", order:6, colorIndex:6, categoryId:"c3", schedule:{}},
+      {id:"p8", name:"이필화", order:7, colorIndex:7, categoryId:"c3", schedule:{}},
+      {id:"p9", name:"정주연", order:8, colorIndex:0, categoryId:"c4", schedule:{}},
+      {id:"p10", name:"김태호", order:9, colorIndex:1, categoryId:"c4", schedule:{}},
+      {id:"p11", name:"김다빈", order:10, colorIndex:2, categoryId:"c4", schedule:{}},
+      {id:"p12", name:"김민준", order:11, colorIndex:3, categoryId:"c4", schedule:{}},
+      {id:"p13", name:"경혜영", order:12, colorIndex:4, categoryId:"c5", schedule:{}}
+    ];
+    return {categories: cats, people: ppl};
+  }
+
+  function startLocalStore(){
+    storeNoteEl.textContent = "이 브라우저에만 저장돼요. 다른 기기·사용자와 공유하려면 db 기능이 필요해요.";
+    var KEY = "team-schedule-v2";
+    function load(){
+      try{
+        var raw = localStorage.getItem(KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch(e){ return null; }
+    }
+    function save(){
+      try{ localStorage.setItem(KEY, JSON.stringify({categories: categories, people: people})); } catch(e){}
+    }
+    var loaded = load();
+    if(loaded && loaded.categories && loaded.people){
+      categories = loaded.categories;
+      people = loaded.people;
+    } else {
+      var seed = seedData();
+      categories = seed.categories;
+      people = seed.people;
+      save();
+    }
+    render();
+
+    store.addCategory = function(data){
+      var id = "c" + Date.now();
+      categories.push(Object.assign({id:id}, data));
+      save(); render();
+    };
+    store.updateCategory = function(id, patch){
+      var c = categories.find(function(x){ return x.id === id; });
+      if(!c) return;
+      Object.assign(c, patch);
+      save(); render();
+    };
+    store.deleteCategory = function(id){
+      categories = categories.filter(function(x){ return x.id !== id; });
+      save(); render();
+    };
+    store.addPerson = function(data){
+      var id = "p" + Date.now();
+      people.push(Object.assign({id:id}, data));
+      save(); render();
+    };
+    store.updatePerson = function(id, patch){
+      var p = people.find(function(x){ return x.id === id; });
+      if(!p) return;
+      if(patch.name !== undefined) p.name = patch.name;
+      if(patch.categoryId !== undefined) p.categoryId = patch.categoryId;
+      if(patch.schedule){
+        p.schedule = p.schedule || {};
+        Object.keys(patch.schedule).forEach(function(k){
+          p.schedule[k] = patch.schedule[k];
+        });
+      }
+      save(); render();
+    };
+    store.deletePerson = function(id){
+      people = people.filter(function(x){ return x.id !== id; });
+      save(); render();
+    };
+  }
+
+  function startDbStore(db){
+    storeNoteEl.textContent = "실시간으로 저장돼요. 같은 조직의 다른 사람도 이 페이지를 열면 함께 편집할 수 있어요.";
+    var catCol = db.collection("categories");
+    var peopleCol = db.collection("people");
+
+    catCol.orderBy("order").onSnapshot(function(snap){
+      categories = snap.docs.map(function(d){
+        var data = d.data() || {};
+        return {id: d.id, name: data.name || "분류", order: data.order || 0};
+      });
+      render();
+    }, function(err){ console.error("categories onSnapshot error", err); });
+
+    peopleCol.orderBy("order").onSnapshot(function(snap){
+      people = snap.docs.map(function(d){
+        var data = d.data() || {};
+        return {
+          id: d.id,
+          name: data.name || "이름 없음",
+          order: data.order || 0,
+          colorIndex: typeof data.colorIndex === "number" ? data.colorIndex : 0,
+          categoryId: data.categoryId || null,
+          schedule: data.schedule || {}
+        };
+      });
+      render();
+    }, function(err){ console.error("people onSnapshot error", err); });
+
+    store.addCategory = function(data){
+      catCol.add(data).catch(function(err){ console.error("add category failed", err); });
+    };
+    store.updateCategory = function(id, patch){
+      catCol.doc(id).update(patch).catch(function(err){ console.error("update category failed", err); });
+    };
+    store.deleteCategory = function(id){
+      catCol.doc(id).delete().catch(function(err){ console.error("delete category failed", err); });
+    };
+    store.addPerson = function(data){
+      peopleCol.add(data).catch(function(err){ console.error("add person failed", err); });
+    };
+    store.updatePerson = function(id, patch){
+      peopleCol.doc(id).update(patch).catch(function(err){ console.error("update person failed", err); });
+    };
+    store.deletePerson = function(id){
+      peopleCol.doc(id).delete().catch(function(err){ console.error("delete person failed", err); });
+    };
+  }
+
+  function init(){
+    if(window.claude && typeof window.claude.use === "function"){
+      window.claude.use("db").then(function(db){
+        if(db){ startDbStore(db); } else { startLocalStore(); }
+      }).catch(function(){ startLocalStore(); });
+    } else {
+      startLocalStore();
+    }
+  }
+
+  render();
+  init();
+})();
+</script>
