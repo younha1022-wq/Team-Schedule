@@ -140,6 +140,7 @@
     font-size:16px;
     font-weight:700;
   }
+  .card-head-actions{ display:flex; gap:8px; }
 
   .btn{
     appearance:none;
@@ -485,19 +486,40 @@
     flex:1;
     display:flex;
     gap:18px;
-    padding-top:26px;
+    padding-top:44px;
     position:relative;
     min-width:0;
   }
   .gridlines{
     position:absolute;
-    left:0; right:0; top:26px;
+    left:0; right:0; top:44px;
     pointer-events:none;
   }
   .gridline{
     position:absolute;
     left:0; right:0;
     border-top:1px dashed var(--line);
+  }
+  .lane-group{
+    display:flex;
+    gap:10px;
+    position:relative;
+  }
+  .lane-group:not(:last-child){
+    border-right:1px dashed var(--line-strong);
+    padding-right:10px;
+  }
+  .lane-group-label{
+    position:absolute;
+    top:-44px; left:0; right:0;
+    text-align:center;
+    font-size:10.5px;
+    font-weight:700;
+    color:var(--muted);
+    letter-spacing:.01em;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
   }
   .lane{
     flex:1 0 92px;
@@ -564,6 +586,21 @@
     opacity:.7;
   }
 
+  /* "전체 일별 근무보기" renders every category at once, so it uses a
+     shorter hour scale and tighter type to still fit one screen. */
+  #allHourRuler{ width:26px; font-size:9.5px; }
+  #allLanes{ gap:12px; padding-top:36px; }
+  #allGridlines{ top:36px; }
+  #allLanes .lane-group{ gap:6px; }
+  #allLanes .lane-group:not(:last-child){ padding-right:6px; }
+  #allLanes .lane-group-label{ top:-36px; font-size:9px; line-height:1.3; }
+  #allLanes .lane{ flex:1 0 46px; max-width:64px; }
+  #allLanes .lane-name{ top:-19px; font-size:9.5px; }
+  #allLanes .lane-bar{ padding:2px 3px; }
+  #allLanes .lane-bar .time{ font-size:9px; line-height:1.2; }
+  #allLanes .lane-bar .note{ font-size:8px; margin-top:1px; }
+  #allLanes .lane-off{ font-size:9px; padding:3px; }
+
   .timeline-empty{
     color:var(--muted);
     font-size:13px;
@@ -602,7 +639,10 @@
   <section class="card">
     <div class="card-head">
       <h2>주간 근무 입력</h2>
-      <button class="btn btn-accent" id="addCategoryBtn">+ 분류 추가</button>
+      <div class="card-head-actions">
+        <button class="btn btn-ghost" id="addCategoryBtn">+ 분류 추가</button>
+        <button class="btn btn-accent" id="saveRosterBtn">저장</button>
+      </div>
     </div>
     <div class="cat-tabs" id="rosterCatTabs"></div>
     <div class="category-panel-head" id="categoryPanelHead"></div>
@@ -638,6 +678,22 @@
       </div>
     </div>
     <p class="timeline-empty" id="timelineEmpty" hidden>표시할 팀원이 없어요.</p>
+  </section>
+
+  <section class="card">
+    <div class="card-head">
+      <h2>전체 일별 근무보기</h2>
+    </div>
+    <p class="range-note"><span id="allDayLabel"></span> 기준으로 전체 분류를 한 화면에 모아 보여줘요. 09:00 ~ 22:00 범위로 표시돼요.</p>
+    <div class="timeline-scroll">
+      <div class="timeline" id="allTimelineWrap">
+        <div class="hour-ruler" id="allHourRuler"></div>
+        <div class="lanes" id="allLanes">
+          <div class="gridlines" id="allGridlines"></div>
+        </div>
+      </div>
+    </div>
+    <p class="timeline-empty" id="allTimelineEmpty" hidden>표시할 팀원이 없어요.</p>
   </section>
 
   <p class="footnote" id="storeNote"></p>
@@ -692,6 +748,8 @@
   ];
   var PALETTE = ["#3B82F6","#F59E0B","#10B981","#EF4444","#8B5CF6","#EC4899","#14B8A6","#F97316"];
   var HOUR_H = 28;
+  var ALL_HOUR_H = 14;
+  var ALL_HEADER_GAP = 36;
   var DAY_MIN = 9;
   var DAY_MAX = 22;
   var NO_CATEGORY = "__none__";
@@ -699,6 +757,7 @@
   var rosterBody = document.getElementById("rosterBody");
   var emptyHint = document.getElementById("emptyHint");
   var addCategoryBtn = document.getElementById("addCategoryBtn");
+  var saveRosterBtn = document.getElementById("saveRosterBtn");
   var rosterCatTabsEl = document.getElementById("rosterCatTabs");
   var categoryPanelHeadEl = document.getElementById("categoryPanelHead");
   var catTabsEl = document.getElementById("catTabs");
@@ -707,6 +766,11 @@
   var gridlinesEl = document.getElementById("gridlines");
   var lanesEl = document.getElementById("lanes");
   var timelineEmptyEl = document.getElementById("timelineEmpty");
+  var allDayLabelEl = document.getElementById("allDayLabel");
+  var allHourRulerEl = document.getElementById("allHourRuler");
+  var allGridlinesEl = document.getElementById("allGridlines");
+  var allLanesEl = document.getElementById("allLanes");
+  var allTimelineEmptyEl = document.getElementById("allTimelineEmpty");
   var storeNoteEl = document.getElementById("storeNote");
   var nightWorkerTextEl = document.getElementById("nightWorkerText");
   var satWorkerTextEl = document.getElementById("satWorkerText");
@@ -727,8 +791,9 @@
   var jsDow = new Date().getDay(); // 0 sun .. 6 sat
   var todayKey = jsDow === 0 ? null : DAYS[jsDow - 1].key; // no Sunday entry; Sunday itself has no "today" tab
   var selectedDay = todayKey || "mon";
+  // Shared between the weekly-input tabs and the per-category day view
+  // so switching one follows through to the other.
   var selectedCategoryId = null;
-  var selectedRosterCatId = null;
   var DEFAULT_START = "09:00";
   var DEFAULT_END = "18:00";
   var NIGHT_START = "12:00";
@@ -770,6 +835,7 @@
     renderRoster();
     renderDayTabs();
     renderTimeline();
+    renderAllTimeline();
   }
 
   function renderStatusBanner(){
@@ -799,25 +865,25 @@
       tabsList.push({id: NO_CATEGORY, name: "미분류"});
     }
     emptyHint.hidden = tabsList.length > 0;
-    if(!selectedRosterCatId || !tabsList.some(function(t){ return t.id === selectedRosterCatId; })){
-      selectedRosterCatId = tabsList.length ? tabsList[0].id : null;
+    if(!selectedCategoryId || !tabsList.some(function(t){ return t.id === selectedCategoryId; })){
+      selectedCategoryId = tabsList.length ? tabsList[0].id : null;
     }
 
     rosterCatTabsEl.innerHTML = "";
     tabsList.forEach(function(t){
       var b = document.createElement("button");
-      b.className = "cat-tab" + (t.id === selectedRosterCatId ? " active" : "");
+      b.className = "cat-tab" + (t.id === selectedCategoryId ? " active" : "");
       b.textContent = t.name;
-      b.addEventListener("click", function(){ selectedRosterCatId = t.id; render(); });
+      b.addEventListener("click", function(){ selectedCategoryId = t.id; render(); });
       rosterCatTabsEl.appendChild(b);
     });
 
     categoryPanelHeadEl.innerHTML = "";
     rosterBody.innerHTML = "";
-    if(!selectedRosterCatId) return;
+    if(!selectedCategoryId) return;
 
-    var isRealCategory = selectedRosterCatId !== NO_CATEGORY;
-    var currentCat = categories.find(function(c){ return c.id === selectedRosterCatId; });
+    var isRealCategory = selectedCategoryId !== NO_CATEGORY;
+    var currentCat = categories.find(function(c){ return c.id === selectedCategoryId; });
 
     if(isRealCategory && currentCat){
       var nameInput = document.createElement("input");
@@ -869,7 +935,7 @@
     }
 
     var members = isRealCategory
-      ? people.filter(function(p){ return p.categoryId === selectedRosterCatId; })
+      ? people.filter(function(p){ return p.categoryId === selectedCategoryId; })
       : people.filter(function(p){ return !categories.some(function(c){ return c.id === p.categoryId; }); });
 
     if(!members.length){
@@ -977,6 +1043,89 @@
     });
   }
 
+  // Draws the fixed 09:00-22:00 hour ruler + gridlines into the given
+  // elements and returns {range, trackH, hourH} for positioning lanes
+  // against. hourH/headerGap let the all-team view render a shorter,
+  // more compact ruler that still fits one screen.
+  function buildHourRuler(rulerEl, gridEl, hourH, headerGap){
+    hourH = hourH || HOUR_H;
+    headerGap = headerGap || 44;
+    var range = {min: DAY_MIN, max: DAY_MAX};
+    var span = range.max - range.min;
+    var trackH = span * hourH;
+
+    rulerEl.innerHTML = "";
+    gridEl.innerHTML = "";
+    gridEl.style.height = trackH + "px";
+    for(var h = range.min; h <= range.max; h++){
+      var top = (h - range.min) * hourH;
+      var tick = document.createElement("div");
+      tick.className = "hour-tick";
+      tick.style.top = (top + headerGap) + "px";
+      tick.textContent = String(h);
+      rulerEl.appendChild(tick);
+
+      if(h !== range.min && h !== range.max){
+        var gl = document.createElement("div");
+        gl.className = "gridline";
+        gl.style.top = top + "px";
+        gridEl.appendChild(gl);
+      }
+    }
+    return {range: range, trackH: trackH, hourH: hourH};
+  }
+
+  // Builds one person's lane (name label + track + bar/off state) for
+  // the given day, shared by the per-category view and the all-team view.
+  function buildDayLane(p, day, range, trackH, hourH){
+    hourH = hourH || HOUR_H;
+    var lane = document.createElement("div");
+    lane.className = "lane";
+
+    var nameEl = document.createElement("div");
+    nameEl.className = "lane-name";
+    nameEl.textContent = p.name;
+    nameEl.style.color = colorFor(p.colorIndex);
+    lane.appendChild(nameEl);
+
+    var track = document.createElement("div");
+    track.className = "lane-track";
+    track.style.setProperty("--track-h", trackH + "px");
+
+    var info = getDaySchedule(p, day);
+    if(info.type === "off"){
+      var off = document.createElement("div");
+      off.className = "lane-off";
+      off.textContent = "휴무";
+      track.appendChild(off);
+    } else {
+      var st = toDec(info.start), en = toDec(info.end);
+      var clampedSt = Math.max(range.min, st);
+      var clampedEn = Math.min(range.max, en);
+      if(clampedEn > clampedSt){
+        var top = (clampedSt - range.min) * hourH;
+        var height = Math.max(16, (clampedEn - clampedSt) * hourH);
+        var bar = document.createElement("div");
+        bar.className = "lane-bar" + (info.type === "default" ? " is-default" : "");
+        bar.style.top = top + "px";
+        bar.style.height = height + "px";
+        bar.style.setProperty("--bar-color", colorFor(p.colorIndex));
+        bar.style.setProperty("--bar-bg", colorFor(p.colorIndex) + "22");
+        bar.innerHTML = '<span class="time">' + fmt(info.start) + "&ndash;" + fmt(info.end) + "</span>" +
+          (info.note ? '<span class="note">' + escapeHtml(info.note) + "</span>" : "");
+        track.appendChild(bar);
+      } else {
+        var outside = document.createElement("div");
+        outside.className = "lane-off";
+        outside.textContent = "9~22시 밖";
+        track.appendChild(outside);
+      }
+    }
+
+    lane.appendChild(track);
+    return lane;
+  }
+
   function renderTimeline(){
     // build the category tab list (defined categories, plus a virtual
     // "미분류" tab only if some person's categoryId matches none of them)
@@ -1000,28 +1149,7 @@
       catTabsEl.appendChild(b);
     });
 
-    var range = {min: DAY_MIN, max: DAY_MAX};
-    var span = range.max - range.min;
-    var trackH = span * HOUR_H;
-
-    hourRulerEl.innerHTML = "";
-    gridlinesEl.innerHTML = "";
-    gridlinesEl.style.height = trackH + "px";
-    for(var h = range.min; h <= range.max; h++){
-      var top = (h - range.min) * HOUR_H;
-      var tick = document.createElement("div");
-      tick.className = "hour-tick";
-      tick.style.top = (top + 26) + "px";
-      tick.textContent = String(h);
-      hourRulerEl.appendChild(tick);
-
-      if(h !== range.min && h !== range.max){
-        var gl = document.createElement("div");
-        gl.className = "gridline";
-        gl.style.top = top + "px";
-        gridlinesEl.appendChild(gl);
-      }
-    }
+    var rr = buildHourRuler(hourRulerEl, gridlinesEl);
 
     var laneNodes = lanesEl.querySelectorAll(".lane");
     laneNodes.forEach(function(n){ n.remove(); });
@@ -1033,51 +1161,46 @@
     timelineEmptyEl.hidden = members.length > 0;
 
     members.forEach(function(p){
-      var lane = document.createElement("div");
-      lane.className = "lane";
+      lanesEl.appendChild(buildDayLane(p, selectedDay, rr.range, rr.trackH));
+    });
+  }
 
-      var nameEl = document.createElement("div");
-      nameEl.className = "lane-name";
-      nameEl.textContent = p.name;
-      nameEl.style.color = colorFor(p.colorIndex);
-      lane.appendChild(nameEl);
+  function renderAllTimeline(){
+    var dayLabel = DAYS.find(function(d){ return d.key === selectedDay; }).label;
+    allDayLabelEl.textContent = dayLabel + "요일";
 
-      var track = document.createElement("div");
-      track.className = "lane-track";
-      track.style.setProperty("--track-h", trackH + "px");
+    var rr = buildHourRuler(allHourRulerEl, allGridlinesEl, ALL_HOUR_H, ALL_HEADER_GAP);
 
-      var info = getDaySchedule(p, selectedDay);
-      if(info.type === "off"){
-        var off = document.createElement("div");
-        off.className = "lane-off";
-        off.textContent = "휴무";
-        track.appendChild(off);
-      } else {
-        var st = toDec(info.start), en = toDec(info.end);
-        var clampedSt = Math.max(range.min, st);
-        var clampedEn = Math.min(range.max, en);
-        if(clampedEn > clampedSt){
-          var top = (clampedSt - range.min) * HOUR_H;
-          var height = Math.max(20, (clampedEn - clampedSt) * HOUR_H);
-          var bar = document.createElement("div");
-          bar.className = "lane-bar" + (info.type === "default" ? " is-default" : "");
-          bar.style.top = top + "px";
-          bar.style.height = height + "px";
-          bar.style.setProperty("--bar-color", colorFor(p.colorIndex));
-          bar.style.setProperty("--bar-bg", colorFor(p.colorIndex) + "22");
-          bar.innerHTML = '<span class="time">' + fmt(info.start) + "&ndash;" + fmt(info.end) + "</span>" +
-            (info.note ? '<span class="note">' + escapeHtml(info.note) + "</span>" : "");
-          track.appendChild(bar);
-        } else {
-          var outside = document.createElement("div");
-          outside.className = "lane-off";
-          outside.textContent = "9~22시 밖";
-          track.appendChild(outside);
-        }
-      }
+    var groupNodes = allLanesEl.querySelectorAll(".lane-group");
+    groupNodes.forEach(function(n){ n.remove(); });
 
-      lane.appendChild(track);
-      lanesEl.appendChild(lane);
+    var groups = categories.map(function(c){
+      return {cat: c, members: people.filter(function(p){ return p.categoryId === c.id; })};
+    }).filter(function(g){ return g.members.length > 0; });
+
+    var uncategorized = people.filter(function(p){
+      return !categories.some(function(c){ return c.id === p.categoryId; });
+    });
+    if(uncategorized.length){
+      groups.push({cat: {id: NO_CATEGORY, name: "미분류"}, members: uncategorized});
+    }
+
+    allTimelineEmptyEl.hidden = people.length > 0;
+
+    groups.forEach(function(group){
+      var groupEl = document.createElement("div");
+      groupEl.className = "lane-group";
+
+      var groupLabel = document.createElement("div");
+      groupLabel.className = "lane-group-label";
+      groupLabel.textContent = group.cat.name;
+      groupEl.appendChild(groupLabel);
+
+      group.members.forEach(function(p){
+        groupEl.appendChild(buildDayLane(p, selectedDay, rr.range, rr.trackH, ALL_HOUR_H));
+      });
+
+      allLanesEl.appendChild(groupEl);
     });
   }
 
@@ -1182,6 +1305,24 @@
 
   addCategoryBtn.addEventListener("click", function(){
     store.addCategory({ name: "새 분류", order: nextOrder(categories) });
+  });
+
+  var saveRosterTimer = null;
+  saveRosterBtn.addEventListener("click", function(){
+    // Name/category edits only commit on blur; force that, then
+    // re-render everything (roster, both day views, banner) right now.
+    if(document.activeElement && document.activeElement !== document.body && typeof document.activeElement.blur === "function"){
+      document.activeElement.blur();
+    }
+    render();
+    clearTimeout(saveRosterTimer);
+    var original = "저장";
+    saveRosterBtn.textContent = "저장됨 ✓";
+    saveRosterBtn.disabled = true;
+    saveRosterTimer = setTimeout(function(){
+      saveRosterBtn.textContent = original;
+      saveRosterBtn.disabled = false;
+    }, 900);
   });
 
   // ---- storage layer: db capability when available, else localStorage ----
